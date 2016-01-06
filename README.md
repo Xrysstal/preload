@@ -8,12 +8,21 @@
 
 
 ##Install
-
     git clone https://github.com/jayZOU/preload.git
     npm install
-    gulp
+ ES5:
+
+ 	gulp
+
+ 访问[http://localhost:8080/demo](http://localhost:8080/demo)
+
+ ES6:
+
+ 	npm run es6
+
+ 访问[http://localhost:8080/es6-demo](http://localhost:8080/es6-demo)
     
-访问[http://localhost:8080/][2]
+
 
 ##Examples
 ```html

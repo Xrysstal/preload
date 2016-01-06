@@ -6,15 +6,21 @@ var gulp = require('gulp'),
 
 gulp.task('connectSrc', function() {
   connect.server({
-    root: './demo',
+    root: './',
     port: 8080
   });
 });
 
-gulp.task('compress', function() {
-  return gulp.src('./src/js/*.js')
+gulp.task('compress-es6', function() {
+  return gulp.src('./src/js/preload-es6.js')
     .pipe(babel())
-    // .pipe(uglify())
+    .pipe(uglify())
+    .pipe(gulp.dest('./es6-demo/'));
+});
+
+gulp.task('compress', function() {
+  return gulp.src('./src/js/preload.js')
+    .pipe(uglify())
     .pipe(gulp.dest('./demo/'));
 });
 
@@ -27,6 +33,11 @@ gulp.task('compress', function() {
 
 gulp.task('watch', function() {
   gulp.watch('./src/js/*.js', ['compress']);
+  // gulp.watch('./ES6/*.js', ['babel']);
+});
+
+gulp.task('watch-es6', function() {
+  gulp.watch('./src/js/*.js', ['compress-es6']);
   // gulp.watch('./ES6/*.js', ['babel']);
 });
 
@@ -47,3 +58,4 @@ gulp.task('watch', function() {
 // });
 
 gulp.task('default', ['watch', 'connectSrc', 'compress']);
+gulp.task('es6', ['watch-es6', 'connectSrc', 'compress-es6']);
