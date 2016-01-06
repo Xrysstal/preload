@@ -13,8 +13,10 @@ gulp.task('connectSrc', function() {
 
 gulp.task('compress-es6', function() {
   return gulp.src('./src/js/preload-es6.js')
-    .pipe(babel())
-    .pipe(uglify())
+    .pipe(babel({
+      presets: ['es2015']
+    }))
+    // .pipe(uglify())
     .pipe(gulp.dest('./es6-demo/'));
 });
 
