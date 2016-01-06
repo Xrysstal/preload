@@ -1,7 +1,8 @@
 var gulp = require('gulp'),
-  connect = require('gulp-connect'),
-  uglify = require('gulp-uglify'),
-  watchify = require('watchify');
+    connect = require('gulp-connect'),
+    uglify = require('gulp-uglify'),
+    watchify = require('watchify'),
+    babel = require("gulp-babel");
 
 gulp.task('connectSrc', function() {
   connect.server({
@@ -12,6 +13,7 @@ gulp.task('connectSrc', function() {
 
 gulp.task('compress', function() {
   return gulp.src('./src/js/*.js')
+    .pipe(babel())
     // .pipe(uglify())
     .pipe(gulp.dest('./demo/'));
 });
