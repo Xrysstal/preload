@@ -84,6 +84,10 @@ var Preload = (function () {
 
 			console.log(flagRes);
 
+			/*
+   *	返回队列内资源加载promise数组，异步
+   *
+   */
 			var promise = flagRes.map(function (res) {
 				self.progress(++params.id, params.total);
 				if (self.isImg(res)) {
@@ -93,6 +97,10 @@ var Preload = (function () {
 				}
 			});
 
+			/*
+   *	执行队列内资源加载promise数组，分成功和失败
+   *
+   */
 			Promise.all(promise).then(function (success) {
 				// console.log("图片加载成功");
 				if (params.flag < params.echetotal - 1) {
@@ -104,34 +112,19 @@ var Preload = (function () {
 				}
 			}).catch(function (error) {
 				var msg = error.path ? "资源加载失败，检查资源路径：" + error.path[0].src : error;
-				// typeof error ==
 				self.throwIf(msg);
-				// console.log(error);
-				// return;
 			});
-
-			// console.log(res);
-			// for(let i = forFlag; i < params.echelonlen[flag]; i++){
-			// 	console.log('aaaaaaaaaaaaaaa');
-
-			// 	if(self.isImg(res)) {
-			// 		let promise = self.preloadImage(res)
-
-			// 	}
-
-			//           // self.preloadImage(res).then((success) => {
-			//           //     console.log('图片加载成功');
-			//           //     if (params.id > params.echelonlen[flag]) self._load(params.echelon[++params.id], ++flag, params.echelonlen[--flag]);
-			//           //     else ++params.id;
-
-			//           // }).catch((err) => {
-			//           //     // console.log(err);
-			//           //     // console.log(this);
-			//           //     self.throwIf("图片加载失败，资源名称：" + res);
-			//           //     return;
-			//           // })
-			// }
 		}
+
+		/*
+  *	初始化预加载所需数据
+  *	echetotal									队列总数
+  *	echelon										队列资源数组
+  *	total										资源总数
+  *	echelonlen									队列回调标记数组
+  *	echeloncb									队列回调函数数组
+  */
+
 	}, {
 		key: '_initData',
 		value: function _initData() {
@@ -183,22 +176,25 @@ var Preload = (function () {
 				}
 			}
 
-			console.log("sources", self.sources);
-			console.log("params.echetotal", params.echetotal);
-			console.log("params.echelon", params.echelon);
-			console.log("params.echelonlen", params.echelonlen);
-			console.log("params.echeloncb", params.echeloncb);
-			console.log("params._createXHR", params._createXHR);
-			console.log("params.total", params.total);
-			console.log("params.imgNode", params.imgNode);
-			console.log("params.imgNodePSrc", params.imgNodePSrc);
-			console.log("params.audioNode", params.audioNode);
-			console.log("params.audioNodePSrc", params.audioNodePSrc);
-			console.log("params.flag", params.flag);
-			console.log("self.completeLoad", self.completeLoad);
-			console.log("self.progress", self.progress);
-			console.log("params.id", params.id);
+			// console.log("sources", self.sources);
+			// console.log("params.echetotal", params.echetotal);
+			// console.log("params.echelon", params.echelon);
+			// console.log("params.echelonlen", params.echelonlen);
+			// console.log("params.echeloncb", params.echeloncb);
+			// console.log("params._createXHR", params._createXHR);
+			// console.log("params.total", params.total);
+			// console.log("params.imgNode", params.imgNode);
+			// console.log("params.imgNodePSrc", params.imgNodePSrc);
+			// console.log("params.audioNode", params.audioNode);
+			// console.log("params.audioNodePSrc", params.audioNodePSrc);
+			// console.log("params.flag", params.flag);
+			// console.log("self.completeLoad", self.completeLoad);
+			// console.log("self.progress", self.progress);
+			// console.log("params.id", params.id);
 		}
+
+		//返回加载图片资源premise对象
+
 	}, {
 		key: 'preloadImage',
 		value: function preloadImage(url) {
@@ -209,6 +205,9 @@ var Preload = (function () {
 				image.src = url;
 			});
 		}
+
+		//返回加载音频资源premise对象
+
 	}, {
 		key: 'preloadAudio',
 		value: function preloadAudio(url) {
@@ -235,6 +234,9 @@ var Preload = (function () {
 				}
 			});
 		}
+
+		//错误数据弹出
+
 	}, {
 		key: 'throwIf',
 		value: function throwIf() {
@@ -245,6 +247,9 @@ var Preload = (function () {
 				return;
 			}
 		}
+
+		//判断是否是图片
+
 	}, {
 		key: 'isImg',
 		value: function isImg(res) {
@@ -257,6 +262,9 @@ var Preload = (function () {
 			}
 			return false;
 		}
+
+		//获取XHR，已废弃
+
 	}, {
 		key: 'getXHR',
 		value: function getXHR() {

@@ -70,6 +70,10 @@ class Preload {
 
 		console.log(flagRes);
 
+		/*
+		*	返回队列内资源加载promise数组，异步
+		*
+		*/
 		let promise = flagRes.map((res) => {
 			self.progress(++params.id, params.total);
 			if(self.isImg(res)) {
@@ -80,6 +84,10 @@ class Preload {
 			}
 		});
 
+		/*
+		*	执行队列内资源加载promise数组，分成功和失败
+		*
+		*/
 		Promise.all(promise).then((success) => {
 			// console.log("图片加载成功");
 			if(params.flag < params.echetotal - 1) {
@@ -91,35 +99,19 @@ class Preload {
 			}
 		}).catch((error) => {
 			let msg = error.path ? "资源加载失败，检查资源路径：" + error.path[0].src : error;
-			// typeof error == 
 			self.throwIf(msg);
-			// console.log(error);
-			// return;
 		})
 
-		// console.log(res);
-		// for(let i = forFlag; i < params.echelonlen[flag]; i++){
-		// 	console.log('aaaaaaaaaaaaaaa');
-
-		// 	if(self.isImg(res)) {
-		// 		let promise = self.preloadImage(res)
-				
-		// 	}
-
-  //           // self.preloadImage(res).then((success) => {
-  //           //     console.log('图片加载成功');
-  //           //     if (params.id > params.echelonlen[flag]) self._load(params.echelon[++params.id], ++flag, params.echelonlen[--flag]);
-  //           //     else ++params.id;
-
-  //           // }).catch((err) => {
-  //           //     // console.log(err);
-  //           //     // console.log(this);
-  //           //     self.throwIf("图片加载失败，资源名称：" + res);
-  //           //     return;
-  //           // })
-		// }
 	}
 
+	/*
+	*	初始化预加载所需数据
+	*	echetotal									队列总数
+	*	echelon										队列资源数组
+	*	total										资源总数
+	*	echelonlen									队列回调标记数组
+	*	echeloncb									队列回调函数数组
+	*/
 	_initData() {
 		let self = this,
 			params = self.params,
@@ -171,23 +163,25 @@ class Preload {
 			}
 		}
 
-		console.log("sources", self.sources);
-		console.log("params.echetotal", params.echetotal);
-		console.log("params.echelon", params.echelon);
-		console.log("params.echelonlen", params.echelonlen);
-		console.log("params.echeloncb", params.echeloncb);
-		console.log("params._createXHR", params._createXHR);
-		console.log("params.total", params.total);
-		console.log("params.imgNode", params.imgNode);
-		console.log("params.imgNodePSrc", params.imgNodePSrc);
-		console.log("params.audioNode", params.audioNode);
-		console.log("params.audioNodePSrc", params.audioNodePSrc);
-		console.log("params.flag", params.flag);
-		console.log("self.completeLoad", self.completeLoad);
-		console.log("self.progress", self.progress);
-		console.log("params.id", params.id);
+		// console.log("sources", self.sources);
+		// console.log("params.echetotal", params.echetotal);
+		// console.log("params.echelon", params.echelon);
+		// console.log("params.echelonlen", params.echelonlen);
+		// console.log("params.echeloncb", params.echeloncb);
+		// console.log("params._createXHR", params._createXHR);
+		// console.log("params.total", params.total);
+		// console.log("params.imgNode", params.imgNode);
+		// console.log("params.imgNodePSrc", params.imgNodePSrc);
+		// console.log("params.audioNode", params.audioNode);
+		// console.log("params.audioNodePSrc", params.audioNodePSrc);
+		// console.log("params.flag", params.flag);
+		// console.log("self.completeLoad", self.completeLoad);
+		// console.log("self.progress", self.progress);
+		// console.log("params.id", params.id);
 	}
 
+
+	//返回加载图片资源premise对象
 	preloadImage(url) {
 		return new Promise(function(resolve, reject) {
 			let image = new Image();
@@ -197,6 +191,7 @@ class Preload {
 		});
 	}
 
+	//返回加载音频资源premise对象
 	preloadAudio(url) {
 		let self = this,
 			params = self.params;
@@ -223,6 +218,7 @@ class Preload {
 		});
 	}
 
+	//错误数据弹出
 	throwIf(msg = '未知错误') {
 		if(this.isDebug){
 			alert(msg);
@@ -230,6 +226,7 @@ class Preload {
 		}
 	}
 
+	//判断是否是图片
 	isImg(res) {
 		var self = this,
 			params = self.params,
@@ -241,6 +238,7 @@ class Preload {
 		return false;
 	}
 
+	//获取XHR，已废弃
 	getXHR() {
 		if (typeof XMLHttpRequest != "undefined") {
 			return new XMLHttpRequest();
