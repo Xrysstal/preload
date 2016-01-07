@@ -3,7 +3,8 @@
   "version": "2.0.1",
   "description": "a preload component",
   "main": "gulpfile.js",
-  "dependencies": {},
+  "dependencies": {
+  },
   "devDependencies": {
     "babel-preset-es2015": "^6.3.13",
     "gulp": "^3.9.0",

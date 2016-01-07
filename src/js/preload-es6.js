@@ -1,107 +1,159 @@
-let Preload = function(opts) {
+class Preload {
+	constructor(opts) {
+		//可修改参数
+		this.isDebug = opts.isDebug || false;
+		this.sources = opts.sources || null;
+		this.progress = opts.progress || function(){};
+		this.connector = opts.connector || null;
+		this.completeLoad = opts.completeLoad || function(){};
+		this.timeOut = opts.loadingOverTime || 15;
+		this.timeOutCB = opts.loadingOverTimeCB || function(){};
 
-	"use strict";
+		//业务逻辑所需参数
+		this.params = {
+			echetotal: 0,											//队列总数
+			echelon: [],											//队列资源列表
+			echelonlen: [],											//记录每个队列长度
+			echeloncb: [],											//队列回调标示
 
-	//可修改参数
-	this.opts = {
-		sources: null,											//预加载资源总队列
-		progress() {},									//进度条回调
-        connector:  null, 										//接口数据		
-		completeLoad() {},								//加载完成回调
-		config: {
-			timeOut: opts.loadingOverTime || 15,				//超时时间
-			timeOutCB: opts.loadingOverTimeCB || function() {},	//超时回调
-		},
+			id: 0,													//自增ID
+			flag: 0,												//标示梯队
 
+			allowType: ['jpg', 'jpeg', 'png', 'gif'],				//允许加载的图片类型
+			total: 0,												//资源总数
+			completedCount: 0,										//已加载资源总数
+
+			_createXHR: null,										//Ajax初始化
+
+			//img标签预加载
+			imgNode: [],
+			imgNodePSrc: [],
+
+			//audio标签预加载
+			audioNode: [],
+			audioNodePSrc: [],
+
+			//异步调用接口数据
+	        head: document.getElementsByTagName("head")[0],
+		}
+
+		if(this.sources == null){
+			this.throwIf('必须传入sources参数');
+			return;
+		}
+
+		this._init();
 	}
 
-	//业务逻辑所需参数
-	this.params = {
-		echetotal: 0,											//队列总数
-		echelon: [],											//队列资源列表
-		echelonlen: [],											//记录每个队列长度
-		echeloncb: [],											//队列回调标示
-
-		id: 0,													//自增ID
-		flag: 0,												//标示梯队
-
-		allowType: ['jpg', 'jpeg', 'png', 'gif'],				//允许加载的图片类型
-		total: 0,												//资源总数
-		completedCount: 0,										//已加载资源总数
-
-		_createXHR: null,										//Ajax初始化
-
-		//img标签预加载
-		imgNode: [],
-		imgNodePSrc: [],
-
-		//audio标签预加载
-		audioNode: [],
-		audioNodePSrc: [],
-
-		//异步调用接口数据
-        head: document.getElementsByTagName("head")[0],
-	}
-
-	for (let i in opts) {
-		this.opts[i] = opts[i];
-	}
-
-	// console.log(opts);
-
-	this._init();
-};
-
-Preload.prototype = {
 	_init() {
-		const self = this, opts = self.opts, params = self.params;
+		let self = this,
+			params = self.params;
+		// console.log("sources", this.sources);
+		// console.log("progress", this.progress);
+		// console.log("connector", this.connector);
+		// console.log("completeLoad", this.completeLoad);
+		// console.log("timeOut", this.timeOut);
+		// console.log("timeOutCB", this.timeOutCB);
+		// console.log("params", this.params);
 
 		//初始化资源参数
 		self._initData();
 
-		//调用接口数据
-		if (opts.connector !== null) {
-            self._getData();
-        }
-
 		//开始预加载资源
-		self._load(params.echelon[0], params.echeloncb[0], params.echelonlen);			
-	},
+		self._load(params.echelon[0]);
+	}
+
+	_load(flagRes, flag = 0) {
+		let self = this,
+			params = self.params;
+
+
+		console.log(flagRes);
+
+		let promise = flagRes.map((res) => {
+			self.progress(++params.id, params.total);
+			if(self.isImg(res)) {
+				return self.preloadImage(res);
+				
+			}else{
+				return self.preloadAudio(res);
+			}
+		});
+
+		Promise.all(promise).then((success) => {
+			// console.log("图片加载成功");
+			if(params.flag < params.echetotal - 1) {
+				params.echeloncb[params.flag]();
+				self._load(params.echelon[++params.flag]);
+			}else {
+				params.echeloncb[params.flag]();
+				self.completeLoad();
+			}
+		}).catch((error) => {
+			let msg = error.path ? "资源加载失败，检查资源路径：" + error.path[0].src : error;
+			// typeof error == 
+			self.throwIf(msg);
+			// console.log(error);
+			// return;
+		})
+
+		// console.log(res);
+		// for(let i = forFlag; i < params.echelonlen[flag]; i++){
+		// 	console.log('aaaaaaaaaaaaaaa');
+
+		// 	if(self.isImg(res)) {
+		// 		let promise = self.preloadImage(res)
+				
+		// 	}
+
+  //           // self.preloadImage(res).then((success) => {
+  //           //     console.log('图片加载成功');
+  //           //     if (params.id > params.echelonlen[flag]) self._load(params.echelon[++params.id], ++flag, params.echelonlen[--flag]);
+  //           //     else ++params.id;
+
+  //           // }).catch((err) => {
+  //           //     // console.log(err);
+  //           //     // console.log(this);
+  //           //     self.throwIf("图片加载失败，资源名称：" + res);
+  //           //     return;
+  //           // })
+		// }
+	}
 
 	_initData() {
-		const self = this, opts = self.opts, params = self.params;
-
-
-		if(opts.sources === null) return;
-
-		params.echetotal = Object.getOwnPropertyNames(opts.sources).length;
-
+		let self = this,
+			params = self.params,
+			k = 0;
+		params.echetotal = Object.getOwnPropertyNames(self.sources).length;
+	
 		//处理梯队资源和回调
-		for(const i in opts.sources){
-
-			for(let j = 0, len = opts.sources[i].source.length; j < len; j++){
-				params.echelon.push(opts.sources[i].source[j]);
-				// console.log(opts.sources[i].source[j]);
+		for(let i in self.sources){
+			params.echelon[k] = []
+			for(let j = 0, len = self.sources[i].source.length; j < len; j++){
+				++params.total;
+				params.echelon[k].push(self.sources[i].source[j]);
 			}
-			// console.log(1);
-			params.echelonlen.push(opts.sources[i].source.length);
+			//对于资源队列echelon进行去重
+			params.echelon[k] = [...new Set(params.echelon[k])];
+
+			// console.log(params.echelon[k]);
+
+			params.echelonlen.push(params.echelon[k].length);
 
 
-			params.echeloncb.push(
-                typeof opts.sources[i].callback == 'undefined' ? null : opts.sources[i].callback
-            );
+			params.echeloncb.push(typeof self.sources[i].callback == 'undefined' ? function(){} : self.sources[i].callback);
+
+			k++;
 		}
 
+
 		//Ajax初始化
-		params._createXHR = self.getXHR();
+		// params._createXHR = self.getXHR();
 
 		//梯队回调标示位置
 		for(let i = 1, len = params.echelonlen.length; i < len; i++){
 			params.echelonlen[i] = params.echelonlen[i - 1] + params.echelonlen[i];
 		}
-
-		//资源总数
-		params.total = params.echelon.length;
 
 		//处理img标签的预加载
 		params.imgNode = document.getElementsByTagName('img');			//获取img标签节点
@@ -119,198 +171,86 @@ Preload.prototype = {
 			}
 		}
 
-		// console.log(opts.sources);
-		// console.log("params.echetotal", params.echetotal);
-		// console.log("params.echelon", params.echelon);
-		// console.log("params.echelonlen", params.echelonlen);
-		// console.log("params.echeloncb", params.echeloncb);
-		// console.log("params._createXHR", params._createXHR);
-		// console.log("params.total", params.total);
-		// console.log("params.imgNode", params.imgNode);
-		// console.log("params.imgNodePSrc", params.imgNodePSrc);
-		// console.log("params.audioNode", params.audioNode);
-		// console.log("params.audioNodePSrc", params.audioNodePSrc);
-	},
+		console.log("sources", self.sources);
+		console.log("params.echetotal", params.echetotal);
+		console.log("params.echelon", params.echelon);
+		console.log("params.echelonlen", params.echelonlen);
+		console.log("params.echeloncb", params.echeloncb);
+		console.log("params._createXHR", params._createXHR);
+		console.log("params.total", params.total);
+		console.log("params.imgNode", params.imgNode);
+		console.log("params.imgNodePSrc", params.imgNodePSrc);
+		console.log("params.audioNode", params.audioNode);
+		console.log("params.audioNodePSrc", params.audioNodePSrc);
+		console.log("params.flag", params.flag);
+		console.log("self.completeLoad", self.completeLoad);
+		console.log("self.progress", self.progress);
+		console.log("params.id", params.id);
+	}
 
-	_load(res, callback, length) {
-		const self = this, opts = self.opts, params = self.params;
+	preloadImage(url) {
+		return new Promise(function(resolve, reject) {
+			let image = new Image();
+			image.onload = resolve;
+			image.onerror = reject;
+			image.src = url;
+		});
+	}
 
-		/*	用于判断是否已加载完当前队列的所有资源，
-		*		若已加载完成，
-		*			判断是否传入回调，
-		*				有则执行回调
-		*				无继续下一队列或退出
-		*/
-		if(params.id >= length[params.flag]){
-			if(params.echeloncb[params.flag] != null){
-				params.echeloncb[params.flag]();
-			}
-			++params.flag;
-		}
+	preloadAudio(url) {
+		let self = this,
+			params = self.params;
 
-		/*
-		*	用于判断当前加载是否达到最大资源数
-		*		YES,执行加载完成回调
-		*/
-		// console.log("id=",params.id);
-		// console.log("echetotal=",params.total);
-		// console.log("res=",res);
-		if(params.id >= params.total) {
+		// console.log("params", params);
 
-			opts.completeLoad();
-			return;
-		}
-		
+		return new Promise((resolve, reject) => {
+			params._createXHR = new XMLHttpRequest();
+			params._createXHR.open("GET", url);
+			params._createXHR.onreadystatechange = handler;
+			params._createXHR.send();
 
-		/*
-		*	判断是否是图片类型
-		*		YES，使用new Image加载
-		*		NO，使用Ajax加载
-		*/
-
-		if(self.isImg(res)) {
-			// console.log(1);
-			const img = new Image();
-			// createTimer(new Date());
-
-			const timer = setTimeout(() => {
-	            opts.config.timeOutCB();
-	        },opts.config.timeOut*1000);
-
-			img.src = res;
-
-			//加载成功后执行
-			img.onload = function() {
-				//加载成功后清理计时器
-				clearTimeout(timer);
-				opts.progress(++params.completedCount, params.total);
-
-				for(let i = 0, len = params.imgNodePSrc.length; i < len; i++){
-					if(params.imgNodePSrc[i] == res){
-						params.imgNode[i].src = params.imgNodePSrc[i];
-						break;
-					}
-				}
-
-				self._load(params.echelon[++params.id], callback, length);
-			}
-
-			//加载失败后执行
-			img.onerror = function() {
-				opts.progress(++completedCount, total);
-				self._load(params.echelon[++params.id], callback, length);
-			}
-
-		}else{
-			params._createXHR.onreadystatechange = function() {
-				if (params._createXHR.readyState == 4){
-					if((params._createXHR.status >= 200 && params._createXHR.status < 300) || params._createXHR.status === 304){
-
-						opts.progress(++params.completedCount, params.total);
-
-						for(let i = 0, len = params.audioNodePSrc.length; i < len; i++){
-							if(params.audioNodePSrc[i] == res){
-								params.audioNode[i].src = params.audioNodePSrc[i];
-								break;
-							}
-						}
-
-						self._load(params.echelon[++params.id], callback, length);
-					}
-				}else if(params._createXHR.status >= 400 && params._createXHR.status < 500){
-					opts.progress(++params.completedCount, params.total);
-					self._load(params.echelon[++params.id], callback, length);
-				}
-			};
-
-			params._createXHR.open("GET", res, true);
-
-			// params.responseType = "arraybuffer";
-
-			params._createXHR.send(null);
-
-
-			// opts.progress(++params.completedCount, params.total);
-			// self._load(params.echelon[++params.id], callback, length);
-			// console.log(0);
-
-		}
-
-
-		// console.log("params.flag",params.flag);
-		// console.log("params.echetotal",params.echetotal);
-
-		// self._load(params.echelon[++params.id], callback, length);
-	},
-
-	/*
-	*	获取后台数据，区分同/异布
-	*
-	*/
-    _getData() {
-
-		const self = this, opts = self.opts, params = self.params;
-
-        for (const i in opts.connector) {
-            if (opts.connector[i].jsonp) {
-                self.asynGetData(opts.connector[i].url);
-            } else {
-                self.syncGetData(opts.connector[i].url, opts.connector[i].callback)
-            }
-        }
-    },
-
-	/*
-	*	同步获取后台数据
-	*	
-	*	@param	url			接口路径 
-	*	@param	callback	成功后回调 
-	*
-	*/
-    syncGetData(url, callback) {
-		const self = this, opts = self.opts, params = self.params;
-        // config.xhr = _createXHR;
-        params._createXHR.onreadystatechange = function() {
-            if (params._createXHR.readyState == 4) {
-                if ((params._createXHR.status >= 200 && params._createXHR.status < 300) || params._createXHR.status === 304) {
-                    callback(params._createXHR.responseText)
+            function handler() {
+                if (this.readyState !== 4) {
+                    return;
+                }
+                if (this.status === 200) {
+                    resolve(this.response);
+                } else {
+                    reject(new Error(this.statusText));
                 }
             }
-        }
 
-        params._createXHR.open("GET", url, true);
+		});
+	}
 
-        params._createXHR.send(null);
-    },
+	throwIf(msg = '未知错误') {
+		if(this.isDebug){
+			alert(msg);
+			return;
+		}
+	}
 
-	/*
-	*	跨域获取后台数据
-	*	
-	*	@param	url	接口路径 
-	*
-	*/
-    asynGetData(url) {
-		const self = this, opts = self.opts, params = self.params;
-        const script = document.createElement("script");
-        script.src = url;
-        params.head.appendChild(script);
-    },
+	isImg(res) {
+		var self = this,
+			params = self.params,
+		 	type = res.split('.').pop();
 
-	/*
-	*	根据平台获取XHR
-	*	
-	*/
+		for (var i = 0, len = params.allowType.length; i < len; i++) {
+			if (type == params.allowType[i]) return true;
+		}
+		return false;
+	}
+
 	getXHR() {
 		if (typeof XMLHttpRequest != "undefined") {
 			return new XMLHttpRequest();
 		} else if (typeof ActiveXObject != "undefined") {
 			if (typeof arguments.callee.activeXString != "string") {
-				let versions = ["MSXML2.XMLHttp.6.0", "MSXML2.XMLHttp.3.0",
-                            "MSXML2.XMLHttp"
-                        ],
-                    i,
-                    len;
-				for (i = 0, len = versions.length; i < len; i++) {
+				var versions = ["MSXML2.XMLHttp.6.0", "MSXML2.XMLHttp.3.0",
+						"MSXML2.XMLHttp"
+					],
+					i, len;
+				for (let i = 0, len = versions.length; i < len; i++) {
 					try {
 						new ActiveXObject(versions[i]);
 						arguments.callee.activeXString = versions[i];
@@ -324,26 +264,5 @@ Preload.prototype = {
 		} else {
 			throw new Error("No XHR object available.");
 		}
-	},
-
-	/*
-	*	判断传入是否是图片，根据后缀名和allowType校验是否符合要求
-	*	
-	*	@param	res	图片资源路径 
-	*
-	*/
-	isImg(res) {
-		const self = this, opts = self.opts, params = self.params, type = res.split('.').pop();
-
-		for (let i = 0, len = params.allowType.length; i < len; i++) {
-			if (type == params.allowType[i]) return true;
-		}
-		return false;
 	}
-}
-
-if (typeof module == 'object') {
-    module.exports = Preload;
-} else {
-    window.Preload = Preload;
 }
