@@ -4,6 +4,7 @@
  - 队列，可以支持队列加载和回调，也可以加载视频或者音频
  - 进度条，可以动态获取进度条信息
  - 支持img标签的预加载，添加pSrc属性即可
+ - [原生ES5](https://github.com/jayZOU/preload)
 
 
 ##Install
