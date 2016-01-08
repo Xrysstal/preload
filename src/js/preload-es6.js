@@ -25,13 +25,15 @@ class Preload {
 
 			_createXHR: null,										//Ajax初始化
 
-			//img标签预加载
-			imgNode: [],
-			imgNodePSrc: [],
+			//img、audio标签预加载
+			PNode: [],
+			nodePSrc: [],
 
-			//audio标签预加载
+			//img标签
+			imgNode: [],
+
+			//audio标签
 			audioNode: [],
-			audioNodePSrc: [],
 
 			//异步调用接口数据
 	        head: document.getElementsByTagName("head")[0],
@@ -68,7 +70,7 @@ class Preload {
 			params = self.params;
 
 
-		console.log(flagRes);
+		// console.log(flagRes);
 
 		/*
 		*	返回队列内资源加载promise数组，异步
@@ -90,6 +92,22 @@ class Preload {
 		*/
 		Promise.all(promise).then((success) => {
 			// console.log("图片加载成功");
+			// console.log("success", success);
+			// console.log("type", type);
+
+			success.map((Svalue) => {
+				// console.log(Svalue);
+				let index = params.nodePSrc.findIndex((value, index, arr) => {
+					return value == Svalue
+				})
+
+				// console.log(index);
+				if(index == -1) return;
+				params.PNode[index].src = Svalue;
+
+
+			});
+
 			if(params.flag < params.echetotal - 1) {
 				params.echeloncb[params.flag]();
 				self._load(params.echelon[++params.flag]);
@@ -151,7 +169,8 @@ class Preload {
 		params.imgNode = document.getElementsByTagName('img');			//获取img标签节点
 		for(let i = 0, len = params.imgNode.length; i < len; i++){
 			if(params.imgNode[i].attributes.pSrc){
-				params.imgNodePSrc[i] = params.imgNode[i].attributes.pSrc.value;
+				params.nodePSrc.push(params.imgNode[i].attributes.pSrc.value);
+				params.PNode.push(params.imgNode[i]);
 			}
 		}
 
@@ -159,7 +178,9 @@ class Preload {
 		params.audioNode = document.getElementsByTagName('audio');			//获取img标签节点
 		for(let i = 0, len = params.audioNode.length; i < len; i++){
 			if(params.audioNode[i].attributes.pSrc){
-				params.audioNodePSrc[i] = params.audioNode[i].attributes.pSrc.value;
+				params.nodePSrc.push(params.audioNode[i].attributes.pSrc.value);
+				params.PNode.push(params.audioNode[i]);
+				// params.audioNodePSrc[i] = params.audioNode[i].attributes.pSrc.value;
 			}
 		}
 
@@ -170,10 +191,8 @@ class Preload {
 		// console.log("params.echeloncb", params.echeloncb);
 		// console.log("params._createXHR", params._createXHR);
 		// console.log("params.total", params.total);
-		// console.log("params.imgNode", params.imgNode);
-		// console.log("params.imgNodePSrc", params.imgNodePSrc);
-		// console.log("params.audioNode", params.audioNode);
-		// console.log("params.audioNodePSrc", params.audioNodePSrc);
+		// console.log("params.PNode", params.PNode);
+		// console.log("params.nodePSrc", params.nodePSrc);
 		// console.log("params.flag", params.flag);
 		// console.log("self.completeLoad", self.completeLoad);
 		// console.log("self.progress", self.progress);
@@ -185,7 +204,7 @@ class Preload {
 	preloadImage(url) {
 		return new Promise(function(resolve, reject) {
 			let image = new Image();
-			image.onload = resolve;
+			image.onload = resolve(url);
 			image.onerror = reject;
 			image.src = url;
 		});
@@ -209,7 +228,7 @@ class Preload {
                     return;
                 }
                 if (this.status === 200) {
-                    resolve(this.response);
+                    resolve(url);
                 } else {
                     reject(new Error(this.statusText));
                 }
@@ -264,3 +283,5 @@ class Preload {
 		}
 	}
 }
+
+// export default Preload;

@@ -3,6 +3,7 @@
 
  - 队列，可以支持队列加载和回调，也可以加载视频或者音频
  - 进度条，可以动态获取进度条信息
+ - 支持img标签的预加载，添加pSrc属性即可
 
 
 ##Install
@@ -16,12 +17,22 @@
 
 ##Examples
 
+```html
+	<audio pSrc="../public/audio/a.mp3" preload="auto" controls></audio>
+	<audio pSrc="../public/audio/b.mp3" preload="auto" controls></audio>
+
+	<img pSrc="../public/image/b1.jpg" alt="">
+	<img pSrc="../public/image/b2.jpg" alt="">
+	<img pSrc="../public/image/b3.jpg" alt="">
+	<img pSrc="../public/image/b4.jpg" alt="">
+```
+
 ```js
     /**
 	*	Preload 资源预加载组件
 	*	@author jayzou
-	*	@time 2016-1-7
-	*	@version 0.0.6
+	*	@time 2016-1-8
+	*	@version 0.0.7
 	*	@class Preload
 	*	@param {object}	sources				必填  加载队列容器，支持队列加载以及加载一个队列后传入回调
 	*	@param {booble}	isDebug				选填	是否开启Debug设置，可返回部分错误信息，默认false
