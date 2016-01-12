@@ -37,6 +37,9 @@ class Preload {
 
 			//异步调用接口数据
 	        head: document.getElementsByTagName("head")[0],
+
+	        //超时对象
+	        timer: [],
 		}
 
 		if(this.sources == null){
@@ -77,8 +80,11 @@ class Preload {
 		*
 		*/
 		let promise = flagRes.map((res) => {
-			self.progress(++params.id, params.total);
+
 			if(self.isImg(res)) {
+				params.timer[res] = setTimeout(() => {
+					self.timeOutCB();
+				}, self.timeOut);
 				return self.preloadImage(res);
 				
 			}else{
@@ -116,6 +122,7 @@ class Preload {
 				self.completeLoad();
 			}
 		}).catch((error) => {
+			// alert(1);
 			let msg = error.path ? "资源加载失败，检查资源路径：" + error.path[0].src : error;
 			self.throwIf(msg);
 		})
@@ -199,12 +206,32 @@ class Preload {
 		// console.log("params.id", params.id);
 	}
 
+	//返回超时Promise对象
+	// timeOutPromise(time) {
+	// 	return new Promise((resolve, reject) => {
+	// 		setTimeout(resolve, time);
+	// 	});
+	// }
+
 
 	//返回加载图片资源premise对象
 	preloadImage(url) {
+		let self = this,
+			params = self.params;
 		return new Promise(function(resolve, reject) {
 			let image = new Image();
-			image.onload = resolve(url);
+			image.onload = function() {
+				// alert(1);
+
+
+				self.progress(++params.id, params.total);
+				
+				//清除计时器
+				clearTimeout(params.timer[url]);
+
+				// console.log(11111);
+				resolve(url);
+			}
 			image.onerror = reject;
 			image.src = url;
 		});
@@ -228,9 +255,11 @@ class Preload {
                     return;
                 }
                 if (this.status === 200) {
+					self.progress(++params.id, params.total);
                     resolve(url);
                 } else {
-                    reject(new Error(this.statusText));
+                	// console.log(this.statusText);
+                    reject(url);
                 }
             }
 
