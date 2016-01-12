@@ -78,6 +78,11 @@ var Preload = (function () {
 
 			//开始预加载资源
 			self._load(params.echelon[0]);
+
+			//调用接口数据
+			if (self.connector !== null) {
+				self._getData();
+			}
 		}
 	}, {
 		key: '_load',
@@ -97,8 +102,8 @@ var Preload = (function () {
 
 				if (self.isImg(res)) {
 					params.timer[res] = setTimeout(function () {
-						self.timeOutCB();
-					}, self.timeOut);
+						self.timeOutCB(res);
+					}, self.timeOut * 1000);
 					return self.preloadImage(res);
 				} else {
 					return self.preloadAudio(res);
@@ -223,6 +228,68 @@ var Preload = (function () {
 		// 		setTimeout(resolve, time);
 		// 	});
 		// }
+
+	}, {
+		key: '_getData',
+		value: function _getData() {
+
+			var self = this,
+			    params = self.params;
+
+			for (var i in self.connector) {
+				if (self.connector[i].jsonp) {
+					self.asynGetData(self.connector[i].url);
+				} else {
+					self.syncGetData(self.connector[i].url, self.connector[i].callback);
+				}
+			}
+		}
+
+		/*
+  *	同步获取后台数据
+  *	
+  *	@param	url			接口路径 
+  *	@param	callback	成功后回调 
+  *
+  */
+
+	}, {
+		key: 'syncGetData',
+		value: function syncGetData(url, callback) {
+			var self = this,
+			    params = self.params;
+
+			params._createXHR = new XMLHttpRequest();
+			// config.xhr = _createXHR;
+			params._createXHR.onreadystatechange = function () {
+				if (params._createXHR.readyState == 4) {
+					if (params._createXHR.status >= 200 && params._createXHR.status < 300 || params._createXHR.status === 304) {
+						callback(params._createXHR.responseText);
+					}
+				}
+			};
+
+			params._createXHR.open("GET", url, true);
+
+			params._createXHR.send(null);
+		}
+
+		/*
+  *	跨域获取后台数据
+  *	
+  *	@param	url	接口路径 
+  *
+  */
+
+	}, {
+		key: 'asynGetData',
+		value: function asynGetData(url) {
+			var self = this,
+			    params = self.params;
+			var script = document.createElement("script");
+			script.src = url;
+			params.head.appendChild(script);
+		}
 
 		//返回加载图片资源premise对象
 

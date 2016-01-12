@@ -32,13 +32,16 @@
     /**
 	*	Preload 资源预加载组件
 	*	@author jayzou
-	*	@time 2016-1-8
-	*	@version 0.0.7
+	*	@time 2016-1-12
+	*	@version 1.0.6
 	*	@class Preload
 	*	@param {object}	sources				必填  加载队列容器，支持队列加载以及加载一个队列后传入回调
-	*	@param {booble}	isDebug				选填	是否开启Debug设置，可返回部分错误信息，默认false
-	*	@param {object}	progress			选填	进度条容器，返回记载进度信息
-	*	@param {object}	completeLoad		选填	完成所有加载项执行回调
+	*   @param {boolean} isDebug   			选填  	是否开启debug选项，用于移动端调试，默认false
+	*   @param {object} connector   		选填  	后台数据接口，可选择同步或异步
+	*   @param int 		loadingOverTime  	选填  	预加载超时时间，默认15， 单位:秒
+	*   @param {object} loadingOverTimeCB   选填  	预加载超时回调
+	*	@param {object}	wrap				选填	进度条容器，返回记载进度信息
+	*	@param {object}	completeLoad		选填	完成所有加载项执行回调，包括同、异步获取数据
 	**/
 
     var preload = new Preload({
@@ -71,23 +74,23 @@
 	            }
 	        }
 	    },
-	    // loadingOverTime: 3,
-	    // loadingOverTimeCB: function(){
-	    //     console.log("资源加载超时");
-	    // },
-	    // connector: {
-	    //     int1: {
-	    //         url: 'http://localhost/tcc/index.php?callback=read&city=上海市',
-	    //         jsonp: true
-	    //     },
-	    //     int2: {
-	    //         url: 'http://localhost/tcc/index.php?callback=read&city=深圳市',
-	    //         jsonp: false,
-	    //         callback: function(data){
-	    //         	console.log(data);
-	    //         }
-	    //     }
-	    // },
+	    loadingOverTime: 3,
+	    loadingOverTimeCB: function(res) {
+	        console.log("资源加载超时：", res);
+	    },
+	    connector: {
+	        int1: {
+	            url: 'http://localhost/test/index.php?callback=read&city=上海市',
+	            jsonp: true
+	        },
+	        int2: {
+	            url: 'http://localhost/test/index.php?callback=read&city=深圳市',
+	            jsonp: false,
+	            callback: function(data) {
+	                console.log("同步：", data);
+	            }
+	        }
+	    },
 	    progress: function(completedCount, total) {
 	        // console.log(total);
 	        console.log(Math.floor((completedCount / total) * 100));
@@ -96,6 +99,10 @@
 	        console.log("已完成所有加载项");
 	    }
 	});
+
+	function read() {
+	    console.log("异步：", arguments[0])
+	}
 ```
 ##Notes
 
