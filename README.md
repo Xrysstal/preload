@@ -5,6 +5,7 @@
  - 进度条，可以动态获取进度条信息
  - 支持img标签的预加载，添加pSrc属性即可
  - [原生ES5](https://github.com/jayZOU/preload)
+ - [demo](http://jayzou.github.io/preload/index-es6.html)
 
 
 ##Install
